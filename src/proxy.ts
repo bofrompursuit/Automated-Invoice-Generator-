@@ -1,7 +1,18 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
+// Icon/manifest assets stay public: the OS fetches them for "Add to Home
+// Screen" without necessarily carrying the Basic Auth header, and they
+// aren't sensitive. Checked here rather than via proxyConfig.matcher, since
+// its negative-lookahead exclusions weren't actually being honored.
+const PUBLIC_PATH_PREFIXES = ["/_next", "/favicon.ico", "/icon", "/apple-icon", "/manifest"];
+
 export function proxy(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+  if (PUBLIC_PATH_PREFIXES.some((prefix) => pathname.startsWith(prefix))) {
+    return NextResponse.next();
+  }
+
   const user = process.env.BASIC_AUTH_USER;
   const password = process.env.BASIC_AUTH_PASSWORD;
 
@@ -29,5 +40,5 @@ export function proxy(request: NextRequest) {
 }
 
 export const proxyConfig = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
+  matcher: ["/:path*"],
 };
