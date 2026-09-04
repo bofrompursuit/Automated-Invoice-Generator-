@@ -1,15 +1,7 @@
 import { NextResponse } from "next/server";
-import { Resend } from "resend";
+import { sendMailViaGraph } from "@/lib/microsoft-graph";
 
 export async function POST(request: Request) {
-  const apiKey = process.env.RESEND_API_KEY;
-  if (!apiKey) {
-    return NextResponse.json(
-      { error: "RESEND_API_KEY is not configured on the server." },
-      { status: 500 },
-    );
-  }
-
   const body = await request.json();
   const { clientEmail, invoiceNumber, pdfBase64 } = body as {
     clientEmail?: string;
@@ -24,25 +16,18 @@ export async function POST(request: Request) {
     );
   }
 
-  const resend = new Resend(apiKey);
-  const fromAddress = process.env.INVOICE_FROM_EMAIL ?? "invoices@resend.dev";
-
-  const { data, error } = await resend.emails.send({
-    from: fromAddress,
-    to: clientEmail,
-    subject: `Invoice ${invoiceNumber}`,
-    text: `Please find attached invoice ${invoiceNumber}.`,
-    attachments: [
-      {
-        filename: `${invoiceNumber}.pdf`,
-        content: pdfBase64,
-      },
-    ],
-  });
-
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 502 });
+  try {
+    await sendMailViaGraph({
+      to: clientEmail,
+      subject: `Invoice ${invoiceNumber}`,
+      text: `Please find attached invoice ${invoiceNumber}.`,
+      attachment: { filename: `${invoiceNumber}.pdf`, contentBase64: pdfBase64 },
+    });
+    return NextResponse.json({ ok: true });
+  } catch (err) {
+    return NextResponse.json(
+      { error: err instanceof Error ? err.message : "Failed to send invoice." },
+      { status: 502 },
+    );
   }
-
-  return NextResponse.json({ id: data?.id });
 }
