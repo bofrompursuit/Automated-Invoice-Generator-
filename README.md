@@ -9,8 +9,6 @@ HTTP Basic Auth (see `src/proxy.ts`) — the app refuses all traffic until
 - Interactive form for client details, line items (qty × unit price), and tax %
 - Live side-by-side invoice preview
 - Client-side PDF export via `@react-pdf/renderer` (no server rendering)
-- Email delivery of the generated PDF via Microsoft Graph, sent as your own
-  Outlook/Live/Hotmail account (see setup below)
 - Stripe Checkout link generation per invoice (test or live mode, by which key you use)
 
 ## Getting Started
@@ -33,10 +31,7 @@ Open [http://localhost:3000](http://localhost:3000) and log in with the
 See `.env.local.example` for full details. Summary:
 
 - `BASIC_AUTH_USER` / `BASIC_AUTH_PASSWORD` — required, gates the whole app
-- `MICROSOFT_CLIENT_ID` / `MICROSOFT_CLIENT_SECRET` / `MICROSOFT_REFRESH_TOKEN` — used by
-  `/api/send-invoice`; see the one-time Azure app registration + OAuth steps in
-  `.env.local.example`
 - `STRIPE_SECRET_KEY` / `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` — used by
   `/api/create-checkout-session`
-- `SITE_URL` — canonical URL used for Stripe redirect URLs and the Microsoft OAuth
-  redirect URI; never derived from request headers
+- `SITE_URL` — canonical URL used for Stripe redirect URLs; never derived from
+  request headers
