@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 import { pdf, PDFDownloadLink } from "@react-pdf/renderer";
 import { CreditCard, Download, Loader2, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,18 @@ import { InvoicePDF } from "@/components/invoice-pdf";
 import { calcTotal, createDefaultInvoice, type InvoiceData } from "@/lib/invoice";
 
 type StatusMessage = { type: "success" | "error"; text: string } | null;
+
+function noopSubscribe() {
+  return () => {};
+}
+
+function useIsMounted() {
+  return useSyncExternalStore(
+    noopSubscribe,
+    () => true,
+    () => false,
+  );
+}
 
 async function blobToBase64(blob: Blob): Promise<string> {
   const buffer = await blob.arrayBuffer();
@@ -24,14 +36,12 @@ async function blobToBase64(blob: Blob): Promise<string> {
 
 export function InvoiceBuilder() {
   const [data, setData] = useState<InvoiceData>(() => createDefaultInvoice());
-  const [mounted, setMounted] = useState(false);
+  const mounted = useIsMounted();
   const [isSendingEmail, setIsSendingEmail] = useState(false);
   const [isCreatingCheckout, setIsCreatingCheckout] = useState(false);
   const [emailStatus, setEmailStatus] = useState<StatusMessage>(null);
   const [checkoutStatus, setCheckoutStatus] = useState<StatusMessage>(null);
   const [checkoutUrl, setCheckoutUrl] = useState<string | null>(null);
-
-  useEffect(() => setMounted(true), []);
 
   async function handleSendEmail() {
     if (!data.clientEmail) {
