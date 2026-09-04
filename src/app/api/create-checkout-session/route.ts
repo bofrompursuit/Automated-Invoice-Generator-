@@ -24,7 +24,9 @@ export async function POST(request: Request) {
   }
 
   const stripe = new Stripe(secretKey);
-  const origin = request.headers.get("origin") ?? "http://localhost:3000";
+  // Never trust the client-supplied Origin header for redirect URLs on a live
+  // payment flow — it can be spoofed to redirect a paying customer elsewhere.
+  const siteUrl = process.env.SITE_URL ?? "http://localhost:3000";
 
   const session = await stripe.checkout.sessions.create({
     mode: "payment",
@@ -40,8 +42,8 @@ export async function POST(request: Request) {
         quantity: 1,
       },
     ],
-    success_url: `${origin}/?payment=success&invoice=${encodeURIComponent(invoiceNumber)}`,
-    cancel_url: `${origin}/?payment=cancelled&invoice=${encodeURIComponent(invoiceNumber)}`,
+    success_url: `${siteUrl}/?payment=success&invoice=${encodeURIComponent(invoiceNumber)}`,
+    cancel_url: `${siteUrl}/?payment=cancelled&invoice=${encodeURIComponent(invoiceNumber)}`,
   });
 
   return NextResponse.json({ url: session.url });
